@@ -2,20 +2,27 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useStudyStore } from "@/store/useStudyStore";
+import { useStudyStore, Event } from "@/store/useStudyStore";
 import { GradientBlob } from "@/components/ui/GradientBlob";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { ArrowLeft, Plus, Calendar, CheckCircle2, Circle, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Calendar, CheckCircle2, Loader2, Settings, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { AddEventModal } from "@/components/course/AddEventModal";
+import { EventModal } from "@/components/course/EventModal";
+import { CourseModal } from "@/components/dashboard/CourseModal";
+import { CourseCalendar } from "@/components/course/CourseCalendar";
 import { supabase } from "@/lib/supabase";
 
 export default function CoursePage() {
     const params = useParams();
     const router = useRouter();
-    const { courses, events, toggleEventCompletion, deleteEvent, user, setUser, fetchData, isLoading } = useStudyStore();
-    const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
+    const { courses, events, user, setUser, fetchData, isLoading } = useStudyStore();
+
+    // Modal States
+    const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+    const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
+    const [editingEvent, setEditingEvent] = useState<Event | undefined>(undefined);
+
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
@@ -50,6 +57,23 @@ export default function CoursePage() {
         );
     }
 
+    const handleEditEvent = (event: Event) => {
+        setEditingEvent(event);
+        setIsEventModalOpen(true);
+    };
+
+    const handleAddEvent = () => {
+        setEditingEvent(undefined);
+        setIsEventModalOpen(true);
+    };
+
+    const getScoreColor = (score: number | null | undefined) => {
+        if (score === null || score === undefined) return "text-muted-foreground";
+        if (score >= 80) return "text-green-500 font-bold";
+        if (score >= 50) return "text-yellow-500 font-bold";
+        return "text-red-500 font-bold";
+    };
+
     return (
         <div className="min-h-screen p-8 md:p-12 max-w-5xl mx-auto relative">
             <GradientBlob />
@@ -71,10 +95,18 @@ export default function CoursePage() {
                                 </span>
                                 <span className="text-muted-foreground text-sm">{course.semester}</span>
                             </div>
-                            <h1 className="text-4xl font-bold text-foreground">{course.title}</h1>
+                            <div className="flex items-center gap-3">
+                                <h1 className="text-4xl font-bold text-foreground">{course.title}</h1>
+                                <button
+                                    onClick={() => setIsCourseModalOpen(true)}
+                                    className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    <Settings className="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
 
-                        <Button onClick={() => setIsAddEventModalOpen(true)}>
+                        <Button onClick={handleAddEvent}>
                             <Plus className="w-4 h-4 mr-2" />
                             Add Event
                         </Button>
@@ -82,57 +114,46 @@ export default function CoursePage() {
                 </header>
 
                 <section className="space-y-4">
-                    <h2 className="text-xl font-semibold text-foreground/90">Upcoming Events</h2>
-
-                    {courseEvents.length === 0 ? (
-                        <GlassCard className="flex flex-col items-center justify-center py-12 text-center space-y-2">
-                            <Calendar className="w-8 h-8 text-muted-foreground/30" />
-                            <p className="text-muted-foreground">No events scheduled yet.</p>
-                        </GlassCard>
-                    ) : (
-                        <div className="grid gap-4">
-                            {courseEvents.map((event) => (
-                                <GlassCard key={event.id} className="flex items-center gap-4 p-4">
-                                    <button
-                                        onClick={() => toggleEventCompletion(event.id)}
-                                        className={cn(
-                                            "flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
-                                            event.isCompleted
-                                                ? "bg-green-500 border-green-500 text-white"
-                                                : "border-black/30 dark:border-white/30 hover:border-black/50 dark:hover:border-white/50"
-                                        )}
-                                    >
-                                        {event.isCompleted && <CheckCircle2 className="w-4 h-4" />}
-                                    </button>
-
-                                    <div className="flex-grow min-w-0">
-                                        <h3 className={cn(
-                                            "font-medium truncate transition-all",
-                                            event.isCompleted ? "text-muted-foreground line-through" : "text-foreground"
-                                        )}>
-                                            {event.title}
-                                        </h3>
-                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                            <span className="capitalize">{event.type}</span>
-                                            <span>•</span>
-                                            <span>{new Date(event.date).toLocaleDateString()}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-2">
-                                        {/* Trackers placeholder */}
-                                    </div>
-                                </GlassCard>
-                            ))}
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-xl font-semibold text-foreground/90">Course Schedule</h2>
+                        <div className="flex gap-4 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                                <div className="w-2 h-2 rounded-full bg-brand-blue/50" />
+                                <span>Upcoming</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <div className="w-2 h-2 rounded-full bg-green-500/50" />
+                                <span>High Score</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <div className="w-2 h-2 rounded-full bg-yellow-500/50" />
+                                <span>Medium</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <div className="w-2 h-2 rounded-full bg-red-500/50" />
+                                <span>Low/Overdue</span>
+                            </div>
                         </div>
-                    )}
+                    </div>
+
+                    <CourseCalendar
+                        events={courseEvents}
+                        onEditEvent={handleEditEvent}
+                    />
                 </section>
             </div>
 
-            <AddEventModal
-                isOpen={isAddEventModalOpen}
-                onClose={() => setIsAddEventModalOpen(false)}
+            <EventModal
+                isOpen={isEventModalOpen}
+                onClose={() => setIsEventModalOpen(false)}
                 courseId={course.id}
+                initialData={editingEvent}
+            />
+
+            <CourseModal
+                isOpen={isCourseModalOpen}
+                onClose={() => setIsCourseModalOpen(false)}
+                initialData={course}
             />
         </div>
     );

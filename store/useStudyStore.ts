@@ -43,10 +43,12 @@ interface StudyStore {
     fetchData: () => Promise<void>;
 
     addCourse: (course: Omit<Course, "id" | "userId" | "createdAt">) => Promise<void>;
+    updateCourse: (id: string, updates: Partial<Course>) => Promise<void>;
     deleteCourse: (id: string) => Promise<void>;
 
     addEvent: (event: Omit<Event, "id" | "userId" | "isCompleted">) => Promise<void>;
     addRecurringEvents: (baseEvent: Omit<Event, "id" | "userId" | "isCompleted">, dates: number[]) => Promise<void>;
+    updateEvent: (id: string, updates: Partial<Event>) => Promise<void>;
     updateEventScore: (id: string, score: number | null) => Promise<void>;
     toggleEventCompletion: (id: string) => Promise<void>;
     deleteEvent: (id: string) => Promise<void>;
@@ -122,6 +124,27 @@ export const useStudyStore = create<StudyStore>((set, get) => ({
         }));
     },
 
+    updateCourse: async (id, updates) => {
+        const { error } = await supabase
+            .from("courses")
+            .update({
+                title: updates.title,
+                code: updates.code,
+                color: updates.color,
+                semester: updates.semester,
+            })
+            .eq("id", id);
+
+        if (error) {
+            console.error("Error updating course:", error);
+            return;
+        }
+
+        set((state) => ({
+            courses: state.courses.map((c) => (c.id === id ? { ...c, ...updates } : c)),
+        }));
+    },
+
     deleteCourse: async (id) => {
         const { error } = await supabase.from("courses").delete().eq("id", id);
         if (error) {
@@ -144,7 +167,7 @@ export const useStudyStore = create<StudyStore>((set, get) => ({
             type: eventData.type,
             date: eventData.date,
             is_completed: false,
-            score: null,
+            ...(eventData.score != null ? { score: eventData.score } : {}),
             user_id: user.id,
         };
 
@@ -174,9 +197,11 @@ export const useStudyStore = create<StudyStore>((set, get) => ({
             type: baseEvent.type,
             date: date,
             is_completed: false,
-            score: null,
+            ...(baseEvent.score != null ? { score: baseEvent.score } : {}),
             user_id: user.id,
         }));
+
+        console.log("Inserting recurring events payload:", eventsToInsert);
 
         const { data, error } = await supabase
             .from("events")
@@ -184,7 +209,7 @@ export const useStudyStore = create<StudyStore>((set, get) => ({
             .select();
 
         if (error) {
-            console.error("Error adding recurring events:", error);
+            console.error("Error adding recurring events:", error.message, error.details, error.hint);
             return;
         }
 
@@ -197,6 +222,28 @@ export const useStudyStore = create<StudyStore>((set, get) => ({
 
         set((state) => ({
             events: [...state.events, ...formattedEvents],
+        }));
+    },
+
+    updateEvent: async (id, updates) => {
+        const payload: any = {};
+        if (updates.title !== undefined) payload.title = updates.title;
+        if (updates.type !== undefined) payload.type = updates.type;
+        if (updates.date !== undefined) payload.date = updates.date;
+        if (updates.score !== undefined) payload.score = updates.score;
+
+        const { error } = await supabase
+            .from("events")
+            .update(payload)
+            .eq("id", id);
+
+        if (error) {
+            console.error("Error updating event:", error.message, error.details, error.hint);
+            return;
+        }
+
+        set((state) => ({
+            events: state.events.map((e) => (e.id === id ? { ...e, ...updates } : e)),
         }));
     },
 

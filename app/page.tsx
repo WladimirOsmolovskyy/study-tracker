@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { GradientBlob } from "@/components/ui/GradientBlob";
 import { Button } from "@/components/ui/Button";
 import { CourseGrid } from "@/components/dashboard/CourseGrid";
-import { AddCourseModal } from "@/components/dashboard/AddCourseModal";
+import { CourseModal } from "@/components/dashboard/CourseModal";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Plus, LogOut, Loader2 } from "lucide-react";
 import { useStudyStore } from "@/store/useStudyStore";
@@ -110,7 +110,7 @@ export default function Home() {
         </section>
       </div>
 
-      <AddCourseModal
+      <CourseModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
       />
