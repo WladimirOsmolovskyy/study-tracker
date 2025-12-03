@@ -48,7 +48,7 @@ export function EventsMatrix() {
 
     return (
         <GlassCard className="overflow-hidden flex flex-col max-h-[600px]">
-            <div className="p-4 border-b border-white/10 bg-black/5 dark:bg-white/5">
+            <div className="p-4 border-b border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5">
                 <h3 className="text-lg font-semibold text-foreground">Semester Overview</h3>
             </div>
 
@@ -56,14 +56,14 @@ export function EventsMatrix() {
                 <table className="w-full border-collapse text-sm">
                     <thead className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm shadow-sm">
                         <tr>
-                            <th className="p-3 text-left font-medium text-muted-foreground border-b border-white/10 min-w-[120px] sticky left-0 bg-background z-30">
+                            <th className="p-3 text-left font-medium text-muted-foreground border-b border-black/10 dark:border-white/10 min-w-[120px] sticky left-0 bg-background z-30">
                                 Date
                             </th>
-                            <th className="p-3 text-left font-medium text-muted-foreground border-b border-white/10 min-w-[100px] sticky left-[120px] bg-background z-30 border-r border-white/10">
+                            <th className="p-3 text-left font-medium text-muted-foreground border-b border-black/10 dark:border-white/10 min-w-[100px] sticky left-[120px] bg-background z-30 border-r border-black/10 dark:border-white/10">
                                 Day
                             </th>
                             {courses.map(course => (
-                                <th key={course.id} className="p-3 text-center font-bold border-b border-white/10 min-w-[100px]" style={{ color: getCourseColor(course.color) }}>
+                                <th key={course.id} className="p-3 text-center font-bold border-b border-black/10 dark:border-white/10 min-w-[100px]" style={{ color: getCourseColor(course.color) }}>
                                     {course.title}
                                 </th>
                             ))}
@@ -74,19 +74,19 @@ export function EventsMatrix() {
                             const isWeekend = date.getDay() === 0 || date.getDay() === 6;
                             return (
                                 <tr key={i} className={cn(
-                                    "border-b border-white/5 hover:bg-white/5 transition-colors",
+                                    "border-b border-black/5 dark:border-white/5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors",
                                     isWeekend ? "bg-black/5 dark:bg-white/5" : ""
                                 )}>
                                     <td className="p-3 text-foreground/80 sticky left-0 bg-background/95 backdrop-blur-sm z-10">
                                         {date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                                     </td>
-                                    <td className="p-3 text-muted-foreground sticky left-[120px] bg-background/95 backdrop-blur-sm z-10 border-r border-white/10">
+                                    <td className="p-3 text-muted-foreground sticky left-[120px] bg-background/95 backdrop-blur-sm z-10 border-r border-black/10 dark:border-white/10">
                                         {date.toLocaleDateString(undefined, { weekday: 'long' })}
                                     </td>
                                     {courses.map(course => {
                                         const event = getEventForCell(course.id, date);
                                         return (
-                                            <td key={`${course.id}-${i}`} className="p-1 text-center border-r border-white/5 last:border-0">
+                                            <td key={`${course.id}-${i}`} className="p-1 text-center border-r border-black/5 dark:border-white/5 last:border-0">
                                                 {event && (
                                                     <div className={cn(
                                                         "mx-auto w-12 h-8 rounded flex items-center justify-center text-xs transition-all cursor-default",

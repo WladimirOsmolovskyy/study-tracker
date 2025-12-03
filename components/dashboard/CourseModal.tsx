@@ -141,7 +141,7 @@ export function CourseModal({ isOpen, onClose, initialData }: CourseModalProps) 
                                 className="w-8 h-8 p-0 border-0 rounded-full overflow-hidden cursor-pointer opacity-0 absolute inset-0 z-10"
                             />
                             <div className={cn(
-                                "w-8 h-8 rounded-full border-2 border-dashed border-white/30 flex items-center justify-center transition-transform group-hover:scale-110",
+                                "w-8 h-8 rounded-full border-2 border-dashed border-black/30 dark:border-white/30 flex items-center justify-center transition-transform group-hover:scale-110",
                                 color.startsWith('#') && "border-solid border-white ring-2 ring-black dark:ring-white scale-110"
                             )} style={{ backgroundColor: color.startsWith('#') ? color : 'transparent' }}>
                                 {!color.startsWith('#') && <span className="text-xs text-foreground/50">+</span>}

@@ -61,11 +61,11 @@ export function CourseCard({ course, onClick }: CourseCardProps) {
                     </h3>
                 </div>
                 <div className="p-2 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10">
-                    <BookOpen className="w-4 h-4 text-black/70 dark:text-white/70" />
+                    <BookOpen className="w-4 h-4 text-muted-foreground" />
                 </div>
             </div>
 
-            <div className="mt-auto flex items-center gap-2 text-sm text-black/50 dark:text-white/50">
+            <div className="mt-auto flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="w-4 h-4" />
                 <span>{course.semester}</span>
             </div>

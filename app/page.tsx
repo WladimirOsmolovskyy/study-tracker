@@ -74,10 +74,10 @@ export default function Home() {
       <div className="min-h-screen flex flex-col items-center justify-center p-8 relative overflow-hidden">
         <GradientBlob />
         <div className="relative z-10 text-center space-y-6 max-w-lg">
-          <h1 className="text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
+          <h1 className="text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60 dark:from-white dark:to-white/60">
             Study Tracker
           </h1>
-          <p className="text-lg text-white/60">
+          <p className="text-lg text-muted-foreground">
             Your academic journey, beautifully organized. Sign in to sync your courses across devices.
           </p>
           <Button size="lg" onClick={() => setIsAuthModalOpen(true)} className="shadow-brand-pink/20 shadow-xl">
