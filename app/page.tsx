@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { GradientBlob } from "@/components/ui/GradientBlob";
 import { Button } from "@/components/ui/Button";
 import { CourseGrid } from "@/components/dashboard/CourseGrid";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { CourseModal } from "@/components/dashboard/CourseModal";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Plus, LogOut, Loader2 } from "lucide-react";
@@ -103,7 +104,8 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 items-center">
+            <ThemeToggle />
             <Button
               variant="ghost"
               onClick={() => supabase.auth.signOut()}

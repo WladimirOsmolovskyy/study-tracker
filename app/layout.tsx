@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { ThemeProvider } from "@/components/ui/ThemeProvider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -28,9 +29,16 @@ export default function RootLayout({
         )}
       >
         <div className="bg-noise" />
-        <main className="relative z-10">
-          {children}
-        </main>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <main className="relative z-10">
+            {children}
+          </main>
+        </ThemeProvider>
       </body>
     </html>
   );

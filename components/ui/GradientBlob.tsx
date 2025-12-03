@@ -7,7 +7,7 @@ export function GradientBlob() {
         <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none select-none">
             <div className="absolute inset-0 bg-background opacity-90" />
             <motion.div
-                className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] bg-brand-blue/20 rounded-full blur-[60px] mix-blend-screen will-change-transform"
+                className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] bg-brand-blue/20 rounded-full blur-[60px] dark:opacity-30 will-change-transform"
                 animate={{
                     transform: [
                         "translate(0px, 0px) scale(1)",
@@ -22,7 +22,7 @@ export function GradientBlob() {
                 }}
             />
             <motion.div
-                className="absolute top-[20%] right-[-10%] w-[30vw] h-[30vw] bg-brand-pink/20 rounded-full blur-[60px] mix-blend-screen will-change-transform"
+                className="absolute top-[20%] right-[-10%] w-[30vw] h-[30vw] bg-brand-pink/20 rounded-full blur-[60px] dark:opacity-30 will-change-transform"
                 animate={{
                     transform: [
                         "translate(0px, 0px) scale(1)",
@@ -38,7 +38,7 @@ export function GradientBlob() {
                 }}
             />
             <motion.div
-                className="absolute bottom-[-10%] left-[20%] w-[50vw] h-[50vw] bg-brand-cyan/15 rounded-full blur-[60px] mix-blend-screen will-change-transform"
+                className="absolute bottom-[-10%] left-[20%] w-[50vw] h-[50vw] bg-brand-cyan/15 rounded-full blur-[60px] dark:opacity-30 will-change-transform"
                 animate={{
                     transform: [
                         "translate(0px, 0px) scale(1)",

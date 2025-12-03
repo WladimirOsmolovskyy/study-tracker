@@ -12,7 +12,7 @@ export function GlassCard({ children, className, hoverEffect = true, ...props }:
         <motion.div
             className={cn(
                 "glass-card p-6 relative overflow-hidden",
-                hoverEffect && "hover:shadow-brand-blue/10 hover:border-white/30",
+                hoverEffect && "hover:shadow-brand-blue/10 hover:border-white/30 dark:hover:border-white/10",
                 className
             )}
             initial={{ opacity: 0, y: 10 }}

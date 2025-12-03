@@ -14,12 +14,12 @@ export function CourseGrid({ onAddClick }: CourseGridProps) {
     if (courses.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-                <div className="p-4 rounded-full bg-white/5 border border-white/10">
-                    <Plus className="w-8 h-8 text-white/50" />
+                <div className="p-4 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10">
+                    <Plus className="w-8 h-8 text-muted-foreground" />
                 </div>
                 <div className="space-y-1">
-                    <h3 className="text-lg font-medium text-white">No courses yet</h3>
-                    <p className="text-white/50 max-w-xs mx-auto">
+                    <h3 className="text-lg font-medium text-foreground">No courses yet</h3>
+                    <p className="text-muted-foreground max-w-xs mx-auto">
                         Get started by adding your first course to track events and progress.
                     </p>
                 </div>
@@ -43,7 +43,7 @@ export function CourseGrid({ onAddClick }: CourseGridProps) {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onAddClick}
-                className="min-h-[180px] rounded-xl border-2 border-dashed border-white/10 hover:border-white/20 hover:bg-white/5 flex flex-col items-center justify-center gap-2 text-white/40 hover:text-white/70 transition-all"
+                className="min-h-[180px] rounded-xl border-2 border-dashed border-black/10 dark:border-white/10 hover:border-black/20 dark:hover:border-white/20 hover:bg-black/5 dark:hover:bg-white/5 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground transition-all"
             >
                 <Plus className="w-8 h-8" />
                 <span className="font-medium">Add New Course</span>

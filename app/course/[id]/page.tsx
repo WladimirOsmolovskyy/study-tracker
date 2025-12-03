@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { EventModal } from "@/components/course/EventModal";
 import { CourseModal } from "@/components/dashboard/CourseModal";
 import { CourseCalendar } from "@/components/course/CourseCalendar";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { supabase } from "@/lib/supabase";
 
 export default function CoursePage() {
@@ -78,10 +79,13 @@ export default function CoursePage() {
 
             <div className="relative z-10 space-y-8">
                 <header className="space-y-6">
-                    <Button variant="ghost" onClick={() => router.back()} className="pl-0 hover:pl-2 transition-all">
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Back to Dashboard
-                    </Button>
+                    <div className="flex justify-between items-center">
+                        <Button variant="ghost" onClick={() => router.back()} className="pl-0 hover:pl-2 transition-all">
+                            <ArrowLeft className="w-4 h-4 mr-2" />
+                            Back to Dashboard
+                        </Button>
+                        <ThemeToggle />
+                    </div>
 
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div>

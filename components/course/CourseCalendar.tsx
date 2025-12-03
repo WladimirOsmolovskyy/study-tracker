@@ -94,7 +94,7 @@ export function CourseCalendar({ events, onEditEvent, onAddEvent }: CourseCalend
                                 <GlassCard
                                     key={dayIndex}
                                     className={cn(
-                                        "min-h-[120px] p-3 flex flex-col gap-2 transition-all cursor-pointer hover:bg-white/5",
+                                        "min-h-[120px] p-3 flex flex-col gap-2 transition-all cursor-pointer hover:bg-black/5 dark:hover:bg-white/5",
                                         isToday ? "ring-1 ring-brand-blue/50 bg-brand-blue/5" : "",
                                         isPast ? "opacity-70" : ""
                                     )}
