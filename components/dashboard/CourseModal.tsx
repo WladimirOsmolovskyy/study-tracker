@@ -49,6 +49,7 @@ export function CourseModal({ isOpen, onClose, initialData }: CourseModalProps) 
         setIsLoading(true);
 
         try {
+            console.log("Submitting course with color:", color);
             if (initialData) {
                 await updateCourse(initialData.id, {
                     title,
@@ -119,7 +120,7 @@ export function CourseModal({ isOpen, onClose, initialData }: CourseModalProps) 
 
                 <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground/70">Theme Color</label>
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-3 items-center">
                         {gradients.map((g) => (
                             <button
                                 key={g.id}
@@ -132,6 +133,20 @@ export function CourseModal({ isOpen, onClose, initialData }: CourseModalProps) 
                                 )}
                             />
                         ))}
+                        <div className="relative group">
+                            <input
+                                type="color"
+                                value={color.startsWith('#') ? color : "#000000"}
+                                onChange={(e) => setColor(e.target.value)}
+                                className="w-8 h-8 p-0 border-0 rounded-full overflow-hidden cursor-pointer opacity-0 absolute inset-0 z-10"
+                            />
+                            <div className={cn(
+                                "w-8 h-8 rounded-full border-2 border-dashed border-white/30 flex items-center justify-center transition-transform group-hover:scale-110",
+                                color.startsWith('#') && "border-solid border-white ring-2 ring-black dark:ring-white scale-110"
+                            )} style={{ backgroundColor: color.startsWith('#') ? color : 'transparent' }}>
+                                {!color.startsWith('#') && <span className="text-xs text-foreground/50">+</span>}
+                            </div>
+                        </div>
                     </div>
                 </div>
 

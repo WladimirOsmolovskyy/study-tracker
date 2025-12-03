@@ -6,7 +6,7 @@ export interface Event {
     id: string;
     courseId: string;
     title: string;
-    type: "lecture" | "homework" | "exam" | "other";
+    type: string;
     date: number; // Timestamp
     isCompleted: boolean;
     score?: number | null;

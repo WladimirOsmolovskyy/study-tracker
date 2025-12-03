@@ -23,6 +23,7 @@ export default function CoursePage() {
     const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
     const [editingEvent, setEditingEvent] = useState<Event | undefined>(undefined);
 
+    const [initialDate, setInitialDate] = useState<Date | undefined>(undefined);
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
@@ -59,20 +60,17 @@ export default function CoursePage() {
 
     const handleEditEvent = (event: Event) => {
         setEditingEvent(event);
+        setInitialDate(undefined);
         setIsEventModalOpen(true);
     };
 
-    const handleAddEvent = () => {
+    const handleAddEvent = (date?: Date) => {
         setEditingEvent(undefined);
+        setInitialDate(date);
         setIsEventModalOpen(true);
     };
 
-    const getScoreColor = (score: number | null | undefined) => {
-        if (score === null || score === undefined) return "text-muted-foreground";
-        if (score >= 80) return "text-green-500 font-bold";
-        if (score >= 50) return "text-yellow-500 font-bold";
-        return "text-red-500 font-bold";
-    };
+    // ... (getScoreColor remains same) ...
 
     return (
         <div className="min-h-screen p-8 md:p-12 max-w-5xl mx-auto relative">
@@ -106,7 +104,7 @@ export default function CoursePage() {
                             </div>
                         </div>
 
-                        <Button onClick={handleAddEvent}>
+                        <Button onClick={() => handleAddEvent()}>
                             <Plus className="w-4 h-4 mr-2" />
                             Add Event
                         </Button>
@@ -139,6 +137,7 @@ export default function CoursePage() {
                     <CourseCalendar
                         events={courseEvents}
                         onEditEvent={handleEditEvent}
+                        onAddEvent={handleAddEvent}
                     />
                 </section>
             </div>
@@ -148,6 +147,7 @@ export default function CoursePage() {
                 onClose={() => setIsEventModalOpen(false)}
                 courseId={course.id}
                 initialData={editingEvent}
+                initialDate={initialDate}
             />
 
             <CourseModal

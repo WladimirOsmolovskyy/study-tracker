@@ -9,14 +9,23 @@ import { AuthModal } from "@/components/auth/AuthModal";
 import { Plus, LogOut, Loader2 } from "lucide-react";
 import { useStudyStore } from "@/store/useStudyStore";
 import { supabase } from "@/lib/supabase";
-import { EventsMatrix } from "@/components/dashboard/EventsMatrix";
+import { DashboardCalendar } from "@/components/dashboard/DashboardCalendar";
+import { EventModal } from "@/components/course/EventModal";
+import { Event } from "@/store/useStudyStore";
 
 export default function Home() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  // Event Modal State
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<Event | undefined>(undefined);
+  const [initialDate, setInitialDate] = useState<Date | undefined>(undefined);
+  const [selectedCourseId, setSelectedCourseId] = useState<string>("");
+
   const [isMounted, setIsMounted] = useState(false);
 
-  const { user, setUser, fetchData, isLoading } = useStudyStore();
+  const { user, setUser, fetchData, isLoading, courses, events } = useStudyStore();
 
   useEffect(() => {
     setIsMounted(true);
@@ -37,6 +46,25 @@ export default function Home() {
 
     return () => subscription.unsubscribe();
   }, [setUser, fetchData]);
+
+  const handleEditEvent = (event: Event) => {
+    setEditingEvent(event);
+    setInitialDate(undefined);
+    setSelectedCourseId(event.courseId);
+    setIsEventModalOpen(true);
+  };
+
+  const handleAddEvent = (date?: Date) => {
+    if (courses.length === 0) {
+      alert("Please create a course first!");
+      return;
+    }
+    setEditingEvent(undefined);
+    setInitialDate(date);
+    // Default to first course if adding from dashboard
+    setSelectedCourseId(courses[0].id);
+    setIsEventModalOpen(true);
+  };
 
   if (!isMounted) return null;
 
@@ -106,13 +134,26 @@ export default function Home() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-semibold text-foreground/90">Overview</h2>
           </div>
-          <EventsMatrix />
+          <DashboardCalendar
+            events={events}
+            courses={courses}
+            onEditEvent={handleEditEvent}
+            onAddEvent={handleAddEvent}
+          />
         </section>
       </div>
 
       <CourseModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
+      />
+
+      <EventModal
+        isOpen={isEventModalOpen}
+        onClose={() => setIsEventModalOpen(false)}
+        courseId={selectedCourseId}
+        initialData={editingEvent}
+        initialDate={initialDate}
       />
     </div>
   );

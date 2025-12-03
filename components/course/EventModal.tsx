@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useStudyStore, EventType, Event } from "@/store/useStudyStore";
+import { useStudyStore, Event } from "@/store/useStudyStore";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 
@@ -8,14 +8,15 @@ interface EventModalProps {
     onClose: () => void;
     courseId: string;
     initialData?: Event;
+    initialDate?: Date;
 }
 
-const eventTypes: EventType[] = ['lecture', 'homework', 'exam', 'lab', 'other'];
+const eventTypes = ['lecture', 'homework', 'exam', 'lab', 'other'];
 
-export function EventModal({ isOpen, onClose, courseId, initialData }: EventModalProps) {
+export function EventModal({ isOpen, onClose, courseId, initialData, initialDate }: EventModalProps) {
     const { addEvent, addRecurringEvents, updateEvent } = useStudyStore();
     const [title, setTitle] = useState("");
-    const [type, setType] = useState<EventType>("lecture");
+    const [type, setType] = useState("lecture");
     const [date, setDate] = useState("");
     const [score, setScore] = useState<number | "">("");
 
@@ -42,14 +43,23 @@ export function EventModal({ isOpen, onClose, courseId, initialData }: EventModa
             } else {
                 setTitle("");
                 setType("lecture");
-                setDate("");
+
+                if (initialDate) {
+                    const year = initialDate.getFullYear();
+                    const month = String(initialDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(initialDate.getDate()).padStart(2, '0');
+                    setDate(`${year}-${month}-${day}`);
+                } else {
+                    setDate("");
+                }
+
                 setScore("");
                 setRecurrence("none");
                 setSelectedDays([]);
                 setEndDate("");
             }
         }
-    }, [isOpen, initialData]);
+    }, [isOpen, initialData, initialDate]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -149,15 +159,19 @@ export function EventModal({ isOpen, onClose, courseId, initialData }: EventModa
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-foreground/70">Type</label>
-                        <select
+                        <input
+                            list="event-types"
+                            type="text"
                             value={type}
-                            onChange={(e) => setType(e.target.value as EventType)}
-                            className="w-full px-4 py-2 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/50 transition-all text-foreground [&>option]:text-black"
-                        >
+                            onChange={(e) => setType(e.target.value)}
+                            className="w-full px-4 py-2 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/50 transition-all text-foreground capitalize"
+                            placeholder="Select or type..."
+                        />
+                        <datalist id="event-types">
                             {eventTypes.map((t) => (
-                                <option key={t} value={t} className="capitalize">{t}</option>
+                                <option key={t} value={t} />
                             ))}
-                        </select>
+                        </datalist>
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-foreground/70">Date</label>
@@ -256,13 +270,32 @@ export function EventModal({ isOpen, onClose, courseId, initialData }: EventModa
                     </>
                 )}
 
-                <div className="pt-4 flex justify-end gap-3">
-                    <Button type="button" variant="ghost" onClick={onClose}>
-                        Cancel
-                    </Button>
-                    <Button type="submit" isLoading={isLoading}>
-                        {initialData ? "Save Changes" : (recurrence === "none" ? "Add Event" : "Add Recurring Events")}
-                    </Button>
+                <div className="pt-4 flex justify-between gap-3">
+                    {initialData && (
+                        <Button
+                            type="button"
+                            variant="danger"
+                            onClick={async () => {
+                                if (confirm("Are you sure you want to delete this event?")) {
+                                    setIsLoading(true);
+                                    await useStudyStore.getState().deleteEvent(initialData.id);
+                                    setIsLoading(false);
+                                    onClose();
+                                }
+                            }}
+                            isLoading={isLoading}
+                        >
+                            Delete
+                        </Button>
+                    )}
+                    <div className="flex gap-3 ml-auto">
+                        <Button type="button" variant="ghost" onClick={onClose}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" isLoading={isLoading}>
+                            {initialData ? "Save Changes" : (recurrence === "none" ? "Add Event" : "Add Recurring Events")}
+                        </Button>
+                    </div>
                 </div>
             </form>
         </Modal>

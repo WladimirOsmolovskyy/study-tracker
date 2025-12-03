@@ -19,7 +19,8 @@ const gradients: Record<string, string> = {
 
 export function CourseCard({ course, onClick }: CourseCardProps) {
     const router = useRouter();
-    const gradient = gradients[course.color] || gradients.blue;
+    const isCustomColor = course.color.startsWith('#');
+    const gradient = !isCustomColor ? (gradients[course.color] || gradients.blue) : "";
 
     const handleClick = () => {
         if (onClick) {
@@ -34,17 +35,25 @@ export function CourseCard({ course, onClick }: CourseCardProps) {
             className="cursor-pointer group flex flex-col gap-4 min-h-[180px]"
             onClick={handleClick}
         >
-            <div className={cn(
-                "absolute top-0 left-0 w-full h-1 bg-gradient-to-r opacity-80",
-                gradient
-            )} />
+            <div
+                className={cn(
+                    "absolute top-0 left-0 w-full h-1 opacity-80",
+                    !isCustomColor && "bg-gradient-to-r",
+                    gradient
+                )}
+                style={isCustomColor ? { backgroundColor: course.color } : {}}
+            />
 
             <div className="flex justify-between items-start">
                 <div className="space-y-1">
-                    <span className={cn(
-                        "text-xs font-bold uppercase tracking-wider bg-clip-text text-transparent bg-gradient-to-r",
-                        gradient
-                    )}>
+                    <span
+                        className={cn(
+                            "text-xs font-bold uppercase tracking-wider",
+                            !isCustomColor && "bg-clip-text text-transparent bg-gradient-to-r",
+                            gradient
+                        )}
+                        style={isCustomColor ? { color: course.color } : {}}
+                    >
                         {course.code}
                     </span>
                     <h3 className="text-xl font-bold leading-tight group-hover:text-brand-blue transition-colors text-foreground">
