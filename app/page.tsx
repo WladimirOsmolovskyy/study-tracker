@@ -9,6 +9,7 @@ import { AuthModal } from "@/components/auth/AuthModal";
 import { Plus, LogOut, Loader2 } from "lucide-react";
 import { useStudyStore } from "@/store/useStudyStore";
 import { supabase } from "@/lib/supabase";
+import { EventsMatrix } from "@/components/dashboard/EventsMatrix";
 
 export default function Home() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -99,6 +100,13 @@ export default function Home() {
             {isLoading && <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />}
           </div>
           <CourseGrid onAddClick={() => setIsAddModalOpen(true)} />
+        </section>
+
+        <section>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-semibold text-foreground/90">Overview</h2>
+          </div>
+          <EventsMatrix />
         </section>
       </div>
 

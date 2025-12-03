@@ -2,24 +2,25 @@ import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import { User } from '@supabase/supabase-js';
 
-export type Tracker = {
-    id: string;
-    eventId: string;
-    name: string;
-    value: number;
-};
-
-export type EventType = 'lecture' | 'homework' | 'exam' | 'lab' | 'other';
-
-export type CourseEvent = {
+export interface Event {
     id: string;
     courseId: string;
     title: string;
-    type: EventType;
-    date: number;
+    type: "lecture" | "homework" | "exam" | "other";
+    date: number; // Timestamp
     isCompleted: boolean;
-    trackers: Tracker[];
-};
+    score?: number | null;
+    userId: string;
+}
+
+export interface Tracker {
+    id: string;
+    eventId: string;
+    title: string;
+    value: number;
+    maxValue: number;
+    userId: string;
+}
 
 export type Course = {
     id: string;
@@ -28,33 +29,34 @@ export type Course = {
     color: string;
     semester: string;
     createdAt: number;
+    userId: string;
 };
 
-interface StudyState {
+interface StudyStore {
     user: User | null;
     courses: Course[];
-    events: CourseEvent[];
+    events: Event[];
+    trackers: Tracker[];
     isLoading: boolean;
 
     setUser: (user: User | null) => void;
     fetchData: () => Promise<void>;
 
-    addCourse: (course: Omit<Course, 'id' | 'createdAt'>) => Promise<void>;
+    addCourse: (course: Omit<Course, "id" | "userId" | "createdAt">) => Promise<void>;
     deleteCourse: (id: string) => Promise<void>;
 
-    addEvent: (event: Omit<CourseEvent, 'id' | 'isCompleted' | 'trackers'>) => Promise<void>;
+    addEvent: (event: Omit<Event, "id" | "userId" | "isCompleted">) => Promise<void>;
+    addRecurringEvents: (baseEvent: Omit<Event, "id" | "userId" | "isCompleted">, dates: number[]) => Promise<void>;
+    updateEventScore: (id: string, score: number | null) => Promise<void>;
     toggleEventCompletion: (id: string) => Promise<void>;
     deleteEvent: (id: string) => Promise<void>;
-
-    addTracker: (tracker: Omit<Tracker, 'id'>) => Promise<void>;
-    updateTrackerValue: (id: string, value: number) => Promise<void>;
-    deleteTracker: (id: string) => Promise<void>;
 }
 
-export const useStudyStore = create<StudyState>((set, get) => ({
+export const useStudyStore = create<StudyStore>((set, get) => ({
     user: null,
     courses: [],
     events: [],
+    trackers: [],
     isLoading: false,
 
     setUser: (user) => set({ user }),
@@ -66,170 +68,186 @@ export const useStudyStore = create<StudyState>((set, get) => ({
         set({ isLoading: true });
 
         const { data: courses } = await supabase
-            .from('courses')
-            .select('*')
-            .order('created_at', { ascending: true });
+            .from("courses")
+            .select("*")
+            .eq("user_id", user.id);
 
         const { data: events } = await supabase
-            .from('events')
-            .select('*')
-            .order('date', { ascending: true });
+            .from("events")
+            .select("*")
+            .eq("user_id", user.id);
 
-        // Fetch trackers and attach to events (simplified for now)
-        // In a real app, we might fetch trackers on demand or join them
-        // For now, let's just fetch all trackers
-        const { data: trackers } = await supabase
-            .from('trackers')
-            .select('*');
+        // Map snake_case to camelCase
+        const formattedCourses = courses?.map(c => ({
+            ...c,
+            userId: c.user_id,
+            createdAt: new Date(c.created_at).getTime()
+        })) || [];
 
-        const eventsWithTrackers = (events || []).map(event => ({
-            ...event,
-            courseId: event.course_id, // Map snake_case to camelCase
-            isCompleted: event.is_completed,
-            trackers: (trackers || [])
-                .filter((t: any) => t.event_id === event.id)
-                .map((t: any) => ({ ...t, eventId: t.event_id }))
-        }));
+        const formattedEvents = events?.map(e => ({
+            ...e,
+            courseId: e.course_id,
+            isCompleted: e.is_completed,
+            userId: e.user_id
+        })) || [];
 
-        set({
-            courses: (courses || []).map((c: any) => ({ ...c, createdAt: new Date(c.created_at).getTime() })),
-            events: eventsWithTrackers,
-            isLoading: false
-        });
+        set({ courses: formattedCourses, events: formattedEvents, isLoading: false });
     },
 
-    addCourse: async (course) => {
+    addCourse: async (courseData) => {
         const { user } = get();
         if (!user) return;
 
+        const newCourse = {
+            user_id: user.id,
+            title: courseData.title,
+            code: courseData.code,
+            color: courseData.color,
+            semester: courseData.semester
+        };
+
         const { data, error } = await supabase
-            .from('courses')
-            .insert({
-                user_id: user.id,
-                title: course.title,
-                code: course.code,
-                color: course.color,
-                semester: course.semester
-            })
+            .from("courses")
+            .insert(newCourse)
             .select()
             .single();
 
-        if (data) {
-            set((state) => ({
-                courses: [...state.courses, { ...data, createdAt: new Date(data.created_at).getTime() }]
-            }));
+        if (error) {
+            console.error("Error adding course:", error);
+            return;
         }
+
+        set((state) => ({
+            courses: [...state.courses, { ...data, userId: data.user_id, createdAt: new Date(data.created_at).getTime() }],
+        }));
     },
 
     deleteCourse: async (id) => {
-        await supabase.from('courses').delete().eq('id', id);
+        const { error } = await supabase.from("courses").delete().eq("id", id);
+        if (error) {
+            console.error("Error deleting course:", error);
+            return;
+        }
         set((state) => ({
             courses: state.courses.filter((c) => c.id !== id),
-            events: state.events.filter((e) => e.courseId !== id)
+            events: state.events.filter((e) => e.courseId !== id),
         }));
     },
 
-    addEvent: async (event) => {
+    addEvent: async (eventData) => {
         const { user } = get();
         if (!user) return;
 
-        const { data } = await supabase
-            .from('events')
-            .insert({
-                user_id: user.id,
-                course_id: event.courseId,
-                title: event.title,
-                type: event.type,
-                date: event.date,
-                is_completed: false
-            })
+        const newEvent = {
+            course_id: eventData.courseId,
+            title: eventData.title,
+            type: eventData.type,
+            date: eventData.date,
+            is_completed: false,
+            score: null,
+            user_id: user.id,
+        };
+
+        const { data, error } = await supabase
+            .from("events")
+            .insert(newEvent)
             .select()
             .single();
 
-        if (data) {
-            set((state) => ({
-                events: [...state.events, {
-                    ...data,
-                    courseId: data.course_id,
-                    isCompleted: data.is_completed,
-                    trackers: []
-                }]
-            }));
+        if (error) {
+            console.error("Error adding event:", error);
+            return;
         }
+
+        set((state) => ({
+            events: [...state.events, { ...data, courseId: data.course_id, isCompleted: data.is_completed, userId: data.user_id }],
+        }));
+    },
+
+    addRecurringEvents: async (baseEvent, dates) => {
+        const { user } = get();
+        if (!user) return;
+
+        const eventsToInsert = dates.map(date => ({
+            course_id: baseEvent.courseId,
+            title: baseEvent.title,
+            type: baseEvent.type,
+            date: date,
+            is_completed: false,
+            score: null,
+            user_id: user.id,
+        }));
+
+        const { data, error } = await supabase
+            .from("events")
+            .insert(eventsToInsert)
+            .select();
+
+        if (error) {
+            console.error("Error adding recurring events:", error);
+            return;
+        }
+
+        const formattedEvents = data.map(e => ({
+            ...e,
+            courseId: e.course_id,
+            isCompleted: e.is_completed,
+            userId: e.user_id
+        }));
+
+        set((state) => ({
+            events: [...state.events, ...formattedEvents],
+        }));
+    },
+
+    updateEventScore: async (id, score) => {
+        const { error } = await supabase
+            .from("events")
+            .update({ score })
+            .eq("id", id);
+
+        if (error) {
+            console.error("Error updating event score:", error);
+            return;
+        }
+
+        set((state) => ({
+            events: state.events.map((e) =>
+                e.id === id ? { ...e, score } : e
+            ),
+        }));
     },
 
     toggleEventCompletion: async (id) => {
-        const event = get().events.find(e => e.id === id);
+        const { events } = get();
+        const event = events.find((e) => e.id === id);
         if (!event) return;
 
-        await supabase
-            .from('events')
+        const { error } = await supabase
+            .from("events")
             .update({ is_completed: !event.isCompleted })
-            .eq('id', id);
+            .eq("id", id);
+
+        if (error) {
+            console.error("Error toggling event:", error);
+            return;
+        }
 
         set((state) => ({
             events: state.events.map((e) =>
                 e.id === id ? { ...e, isCompleted: !e.isCompleted } : e
-            )
+            ),
         }));
     },
 
     deleteEvent: async (id) => {
-        await supabase.from('events').delete().eq('id', id);
-        set((state) => ({
-            events: state.events.filter((e) => e.id !== id)
-        }));
-    },
-
-    addTracker: async (tracker) => {
-        const { user } = get();
-        if (!user) return;
-
-        const { data } = await supabase
-            .from('trackers')
-            .insert({
-                user_id: user.id,
-                event_id: tracker.eventId,
-                name: tracker.name,
-                value: tracker.value
-            })
-            .select()
-            .single();
-
-        if (data) {
-            set((state) => ({
-                events: state.events.map((e) =>
-                    e.id === tracker.eventId
-                        ? { ...e, trackers: [...e.trackers, { ...data, eventId: data.event_id }] }
-                        : e
-                )
-            }));
+        const { error } = await supabase.from("events").delete().eq("id", id);
+        if (error) {
+            console.error("Error deleting event:", error);
+            return;
         }
-    },
-
-    updateTrackerValue: async (id, value) => {
-        await supabase
-            .from('trackers')
-            .update({ value })
-            .eq('id', id);
-
         set((state) => ({
-            events: state.events.map((e) => ({
-                ...e,
-                trackers: e.trackers.map((t) =>
-                    t.id === id ? { ...t, value } : t
-                )
-            }))
-        }));
-    },
-
-    deleteTracker: async (id) => {
-        await supabase.from('trackers').delete().eq('id', id);
-        set((state) => ({
-            events: state.events.map((e) => ({
-                ...e,
-                trackers: e.trackers.filter((t) => t.id !== id)
-            }))
+            events: state.events.filter((e) => e.id !== id),
         }));
     },
 }));
