@@ -66,10 +66,10 @@ export default function Home() {
       <div className="relative z-10 space-y-12">
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60 dark:from-white dark:to-white/60">
               Welcome Back
             </h1>
-            <p className="text-lg text-white/60 max-w-md">
+            <p className="text-lg text-muted-foreground max-w-md">
               Manage your courses, track deadlines, and visualize your academic progress.
             </p>
           </div>
@@ -95,8 +95,8 @@ export default function Home() {
 
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold text-white/90">Your Courses</h2>
-            {isLoading && <Loader2 className="w-5 h-5 animate-spin text-white/50" />}
+            <h2 className="text-2xl font-semibold text-foreground/90">Your Courses</h2>
+            {isLoading && <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />}
           </div>
           <CourseGrid onAddClick={() => setIsAddModalOpen(true)} />
         </section>

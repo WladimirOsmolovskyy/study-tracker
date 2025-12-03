@@ -36,7 +36,6 @@ export function CourseGrid({ onAddClick }: CourseGridProps) {
                 <CourseCard
                     key={course.id}
                     course={course}
-                    onClick={() => console.log("Navigate to course", course.id)}
                 />
             ))}
 

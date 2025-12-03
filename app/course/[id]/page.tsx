@@ -65,14 +65,13 @@ export default function CoursePage() {
                         <div>
                             <div className="flex items-center gap-3 mb-2">
                                 <span className={cn(
-                                    "px-2 py-1 rounded text-xs font-bold uppercase tracking-wider bg-white/10 border border-white/10",
-                                    // Add color logic here if needed
+                                    "px-2 py-1 rounded text-xs font-bold uppercase tracking-wider bg-black/10 dark:bg-white/10 border border-black/10 dark:border-white/10 text-foreground",
                                 )}>
                                     {course.code}
                                 </span>
-                                <span className="text-white/50 text-sm">{course.semester}</span>
+                                <span className="text-muted-foreground text-sm">{course.semester}</span>
                             </div>
-                            <h1 className="text-4xl font-bold text-white">{course.title}</h1>
+                            <h1 className="text-4xl font-bold text-foreground">{course.title}</h1>
                         </div>
 
                         <Button onClick={() => setIsAddEventModalOpen(true)}>
@@ -83,12 +82,12 @@ export default function CoursePage() {
                 </header>
 
                 <section className="space-y-4">
-                    <h2 className="text-xl font-semibold text-white/90">Upcoming Events</h2>
+                    <h2 className="text-xl font-semibold text-foreground/90">Upcoming Events</h2>
 
                     {courseEvents.length === 0 ? (
                         <GlassCard className="flex flex-col items-center justify-center py-12 text-center space-y-2">
-                            <Calendar className="w-8 h-8 text-white/30" />
-                            <p className="text-white/50">No events scheduled yet.</p>
+                            <Calendar className="w-8 h-8 text-muted-foreground/30" />
+                            <p className="text-muted-foreground">No events scheduled yet.</p>
                         </GlassCard>
                     ) : (
                         <div className="grid gap-4">
@@ -100,7 +99,7 @@ export default function CoursePage() {
                                             "flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
                                             event.isCompleted
                                                 ? "bg-green-500 border-green-500 text-white"
-                                                : "border-white/30 hover:border-white/50"
+                                                : "border-black/30 dark:border-white/30 hover:border-black/50 dark:hover:border-white/50"
                                         )}
                                     >
                                         {event.isCompleted && <CheckCircle2 className="w-4 h-4" />}
@@ -109,11 +108,11 @@ export default function CoursePage() {
                                     <div className="flex-grow min-w-0">
                                         <h3 className={cn(
                                             "font-medium truncate transition-all",
-                                            event.isCompleted ? "text-white/30 line-through" : "text-white"
+                                            event.isCompleted ? "text-muted-foreground line-through" : "text-foreground"
                                         )}>
                                             {event.title}
                                         </h3>
-                                        <div className="flex items-center gap-2 text-sm text-white/40">
+                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                             <span className="capitalize">{event.type}</span>
                                             <span>•</span>
                                             <span>{new Date(event.date).toLocaleDateString()}</span>
