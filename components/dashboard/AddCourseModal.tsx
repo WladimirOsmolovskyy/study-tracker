@@ -18,10 +18,10 @@ const gradients = [
 ];
 
 export function AddCourseModal({ isOpen, onClose }: AddCourseModalProps) {
-    const addCourse = useStudyStore((state) => state.addCourse);
+    const { addCourse, semesters } = useStudyStore();
     const [title, setTitle] = useState("");
     const [code, setCode] = useState("");
-    const [semester, setSemester] = useState("");
+    const [semesterId, setSemesterId] = useState("");
     const [color, setColor] = useState("blue");
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -31,14 +31,14 @@ export function AddCourseModal({ isOpen, onClose }: AddCourseModalProps) {
         addCourse({
             title,
             code,
-            semester: semester || "Current",
+            semesterId: semesterId || null,
             color,
         });
 
         // Reset and close
         setTitle("");
         setCode("");
-        setSemester("");
+        setSemesterId("");
         setColor("blue");
         onClose();
     };
@@ -72,13 +72,16 @@ export function AddCourseModal({ isOpen, onClose }: AddCourseModalProps) {
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-white/70">Semester</label>
-                        <input
-                            type="text"
-                            value={semester}
-                            onChange={(e) => setSemester(e.target.value)}
-                            placeholder="e.g. Fall 2024"
-                            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/50 transition-all placeholder:text-white/20"
-                        />
+                        <select
+                            value={semesterId}
+                            onChange={(e) => setSemesterId(e.target.value)}
+                            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/50 transition-all text-white"
+                        >
+                            <option value="" className="bg-gray-900">Select Semester...</option>
+                            {semesters.map(s => (
+                                <option key={s.id} value={s.id} className="bg-gray-900">{s.name}</option>
+                            ))}
+                        </select>
                     </div>
                 </div>
 

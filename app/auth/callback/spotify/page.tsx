@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSpotifyStore } from "@/store/useSpotifyStore";
 import { Loader2 } from "lucide-react";
 
-export default function SpotifyCallbackPage() {
+function SpotifyCallbackContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { handleCallback, error } = useSpotifyStore();
@@ -55,5 +55,20 @@ export default function SpotifyCallbackPage() {
                 <p className="text-muted-foreground">Connecting to Spotify...</p>
             </div>
         </div>
+    );
+}
+
+export default function SpotifyCallbackPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="w-8 h-8 animate-spin text-brand-blue" />
+                    <p className="text-muted-foreground">Loading...</p>
+                </div>
+            </div>
+        }>
+            <SpotifyCallbackContent />
+        </Suspense>
     );
 }
