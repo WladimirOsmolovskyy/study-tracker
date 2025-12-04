@@ -14,9 +14,17 @@ import { DashboardCalendar } from "@/components/dashboard/DashboardCalendar";
 import { EventModal } from "@/components/course/EventModal";
 import { Event } from "@/store/useStudyStore";
 
+import { EventsMatrix } from "@/components/dashboard/EventsMatrix";
+import { cn } from "@/lib/utils";
+import { SettingsModal } from "@/components/dashboard/SettingsModal";
+import { Settings } from "lucide-react";
+
 export default function Home() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"calendar" | "matrix">("calendar");
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [filterType, setFilterType] = useState<string>("all");
 
   // Event Modal State
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
@@ -26,7 +34,9 @@ export default function Home() {
 
   const [isMounted, setIsMounted] = useState(false);
 
-  const { user, setUser, fetchData, isLoading, courses, events } = useStudyStore();
+  const { user, setUser, fetchData, isLoading, courses, events, settings } = useStudyStore();
+
+  const filteredEvents = events.filter(e => filterType === "all" || e.type === filterType);
 
   useEffect(() => {
     setIsMounted(true);
@@ -56,14 +66,10 @@ export default function Home() {
   };
 
   const handleAddEvent = (date?: Date) => {
-    if (courses.length === 0) {
-      alert("Please create a course first!");
-      return;
-    }
     setEditingEvent(undefined);
     setInitialDate(date);
-    // Default to first course if adding from dashboard
-    setSelectedCourseId(courses[0].id);
+    // If we have courses, default to the first one, otherwise empty string will trigger selection
+    setSelectedCourseId(courses.length > 0 ? courses[0].id : "");
     setIsEventModalOpen(true);
   };
 
@@ -90,39 +96,10 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen p-8 md:p-12 max-w-7xl mx-auto relative">
+    <div className="min-h-screen p-8 md:p-12 max-w-[1600px] mx-auto relative">
       <GradientBlob />
 
-      <div className="relative z-10 space-y-12">
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60 dark:from-white dark:to-white/60">
-              Welcome Back
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-md">
-              Manage your courses, track deadlines, and visualize your academic progress.
-            </p>
-          </div>
-
-          <div className="flex gap-3 items-center">
-            <ThemeToggle />
-            <Button
-              variant="ghost"
-              onClick={() => supabase.auth.signOut()}
-            >
-              <LogOut className="w-5 h-5 mr-2" />
-              Sign Out
-            </Button>
-            <Button
-              onClick={() => setIsAddModalOpen(true)}
-              className="shadow-brand-blue/20 shadow-xl"
-              size="lg"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              New Course
-            </Button>
-          </div>
-        </header>
+      <div className="relative z-10 space-y-48">
 
         <section>
           <div className="flex items-center justify-between mb-6">
@@ -132,18 +109,71 @@ export default function Home() {
           <CourseGrid onAddClick={() => setIsAddModalOpen(true)} />
         </section>
 
-        <section>
+        <section className="min-h-screen flex flex-col">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-semibold text-foreground/90">Overview</h2>
+            <div className="flex items-center gap-3">
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="px-3 py-1.5 rounded-md text-sm font-medium bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:outline-none text-foreground capitalize"
+              >
+                <option value="all">All Types</option>
+                {(settings?.eventTypes || ['lecture', 'homework', 'exam', 'lab', 'other']).map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+              <div className="flex bg-black/5 dark:bg-white/5 p-1 rounded-lg border border-black/10 dark:border-white/10">
+                <button
+                  onClick={() => setViewMode("calendar")}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md text-sm font-medium transition-all",
+                    viewMode === "calendar"
+                      ? "bg-white dark:bg-white/10 text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Calendar
+                </button>
+                <button
+                  onClick={() => setViewMode("matrix")}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md text-sm font-medium transition-all",
+                    viewMode === "matrix"
+                      ? "bg-white dark:bg-white/10 text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Matrix
+                </button>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setIsSettingsModalOpen(true)} className="ml-2">
+                <Settings className="w-5 h-5 text-muted-foreground" />
+              </Button>
+            </div>
           </div>
-          <DashboardCalendar
-            events={events}
-            courses={courses}
-            onEditEvent={handleEditEvent}
-            onAddEvent={handleAddEvent}
-          />
+
+          {viewMode === "calendar" ? (
+            <DashboardCalendar
+              events={filteredEvents}
+              courses={courses}
+              onEditEvent={handleEditEvent}
+              onAddEvent={handleAddEvent}
+            />
+          ) : (
+            <EventsMatrix
+              events={filteredEvents}
+              onEditEvent={handleEditEvent}
+              onAddEvent={(date, courseId) => {
+                setEditingEvent(undefined);
+                setInitialDate(date);
+                setSelectedCourseId(courseId);
+                setIsEventModalOpen(true);
+              }}
+            />
+          )}
         </section>
-      </div>
+      </div >
 
       <CourseModal
         isOpen={isAddModalOpen}
@@ -157,6 +187,11 @@ export default function Home() {
         initialData={editingEvent}
         initialDate={initialDate}
       />
-    </div>
+
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+      />
+    </div >
   );
 }

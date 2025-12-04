@@ -1,12 +1,14 @@
-import { Course } from "@/store/useStudyStore";
+import { useStudyStore, Course } from "@/store/useStudyStore";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { cn } from "@/lib/utils";
-import { BookOpen, Calendar } from "lucide-react";
+import { Calendar } from "lucide-react";
+
 import { useRouter } from "next/navigation";
 
 interface CourseCardProps {
     course: Course;
     onClick?: () => void;
+    action?: React.ReactNode;
 }
 
 const gradients: Record<string, string> = {
@@ -17,8 +19,9 @@ const gradients: Record<string, string> = {
     green: "from-emerald-500 to-teal-400",
 };
 
-export function CourseCard({ course, onClick }: CourseCardProps) {
+export function CourseCard({ course, onClick, action }: CourseCardProps) {
     const router = useRouter();
+    const { semesters } = useStudyStore();
     const isCustomColor = course.color.startsWith('#');
     const gradient = !isCustomColor ? (gradients[course.color] || gradients.blue) : "";
 
@@ -30,14 +33,23 @@ export function CourseCard({ course, onClick }: CourseCardProps) {
         }
     };
 
+    const semesterName = semesters.find(s => s.id === course.semesterId)?.name || "Unknown Semester";
+
     return (
         <GlassCard
-            className="cursor-pointer group flex flex-col gap-4 min-h-[180px]"
+            className="cursor-pointer group flex flex-col gap-4 min-h-[180px] transition-all duration-75"
+            onMouseEnter={(e) => {
+                const color = isCustomColor ? course.color : getHexForGradient(course.color);
+                e.currentTarget.style.borderColor = color;
+            }}
+            onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '';
+            }}
             onClick={handleClick}
         >
             <div
                 className={cn(
-                    "absolute top-0 left-0 w-full h-1 opacity-80",
+                    "absolute top-0 left-0 w-full h-1 opacity-80 transition-all duration-75 group-hover:opacity-100 group-hover:h-1.5",
                     !isCustomColor && "bg-gradient-to-r",
                     gradient
                 )}
@@ -56,19 +68,38 @@ export function CourseCard({ course, onClick }: CourseCardProps) {
                     >
                         {course.code}
                     </span>
-                    <h3 className="text-xl font-bold leading-tight group-hover:text-brand-blue transition-colors text-foreground">
+                    <h3
+                        className="text-xl font-bold leading-tight transition-colors text-foreground group-hover:text-[var(--hover-color)]"
+                        style={{
+                            // @ts-ignore
+                            "--hover-color": isCustomColor ? course.color : getHexForGradient(course.color)
+                        }}
+                    >
                         {course.title}
                     </h3>
                 </div>
-                <div className="p-2 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10">
-                    <BookOpen className="w-4 h-4 text-muted-foreground" />
+                <div className="flex items-center gap-2">
+                    {action}
+
                 </div>
             </div>
 
             <div className="mt-auto flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="w-4 h-4" />
-                <span>{course.semester}</span>
+                <span>{semesterName}</span>
             </div>
         </GlassCard>
     );
+}
+
+// Helper to get a hex color for the predefined gradients to use in shadows
+function getHexForGradient(colorName: string) {
+    const colors: Record<string, string> = {
+        blue: "#3b82f6",
+        pink: "#ec4899",
+        purple: "#a855f7",
+        orange: "#f97316",
+        green: "#10b981",
+    };
+    return colors[colorName] || colors.blue;
 }

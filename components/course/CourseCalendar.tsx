@@ -1,41 +1,57 @@
 import { useMemo } from "react";
-import { Event } from "@/store/useStudyStore";
-import { cn } from "@/lib/utils";
+import { useStudyStore, Event } from "@/store/useStudyStore";
+import { cn, formatEventTitle, hexToRgb, getGradeColor } from "@/lib/utils";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { CheckCircle2, Circle } from "lucide-react";
 
 interface CourseCalendarProps {
     events: Event[];
+    semesterId?: string | null;
     onEditEvent: (event: Event) => void;
     onAddEvent: (date: Date) => void;
 }
 
-export function CourseCalendar({ events, onEditEvent, onAddEvent }: CourseCalendarProps) {
+export function CourseCalendar({ events, semesterId, onEditEvent, onAddEvent }: CourseCalendarProps) {
+    const { semesters, settings } = useStudyStore();
+
     // 1. Generate Calendar Grid (Weeks)
     const weeks = useMemo(() => {
-        if (events.length === 0) return [];
+        const semester = semesters.find(s => s.id === semesterId);
 
-        const timestamps = events.map(e => e.date);
-        const minDate = new Date(Math.min(...timestamps));
-        const maxDate = new Date(Math.max(...timestamps));
+        let startDate: Date;
+        let endDate: Date;
+
+        if (semester) {
+            startDate = new Date(semester.startDate);
+            endDate = new Date(semester.endDate);
+        } else {
+            if (events.length === 0) return [];
+
+            const timestamps = events.map(e => e.date);
+            const minDate = new Date(Math.min(...timestamps));
+            const maxDate = new Date(Math.max(...timestamps));
+
+            startDate = minDate;
+            endDate = maxDate;
+        }
 
         // Adjust to start on Monday of the first week
-        const startDate = new Date(minDate);
-        const day = startDate.getDay();
-        const diff = startDate.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
-        startDate.setDate(diff);
+        const start = new Date(startDate);
+        const day = start.getDay();
+        const diff = start.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+        start.setDate(diff);
 
         // Adjust end date to end of the last week (Sunday)
-        const endDate = new Date(maxDate);
-        const endDay = endDate.getDay();
-        const endDiff = endDate.getDate() + (endDay === 0 ? 0 : 7 - endDay);
-        endDate.setDate(endDiff);
+        const end = new Date(endDate);
+        const endDay = end.getDay();
+        const endDiff = end.getDate() + (endDay === 0 ? 0 : 7 - endDay);
+        end.setDate(endDiff);
 
         // Generate weeks
         const weeksArray: Date[][] = [];
-        let current = new Date(startDate);
+        let current = new Date(start);
 
-        while (current <= endDate) {
+        while (current <= end) {
             const week: Date[] = [];
             for (let i = 0; i < 7; i++) {
                 week.push(new Date(current));
@@ -45,7 +61,7 @@ export function CourseCalendar({ events, onEditEvent, onAddEvent }: CourseCalend
         }
 
         return weeksArray;
-    }, [events]);
+    }, [events, semesterId, semesters]);
 
     const getEventsForDate = (date: Date) => {
         return events.filter(e =>
@@ -57,11 +73,39 @@ export function CourseCalendar({ events, onEditEvent, onAddEvent }: CourseCalend
         });
     };
 
-    const getScoreColor = (score: number | null | undefined) => {
-        if (score === null || score === undefined) return "bg-brand-blue/20 text-brand-blue border-brand-blue/30";
-        if (score >= 80) return "bg-green-500/20 text-green-500 border-green-500/30";
-        if (score >= 50) return "bg-yellow-500/20 text-yellow-500 border-yellow-500/30";
-        return "bg-red-500/20 text-red-500 border-red-500/30";
+    const getScoreStyles = (score: number | null | undefined) => {
+        const undefinedColor = settings?.undefinedColor || "#71717a";
+        const gradeColors = settings?.gradeColors || [
+            { min: 80, color: "#22c55e" },
+            { min: 50, color: "#eab308" },
+            { min: 0, color: "#ef4444" }
+        ];
+
+        if (score === null || score === undefined) {
+            const rgb = hexToRgb(undefinedColor);
+            const bg = rgb ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.1)` : undefinedColor;
+            return {
+                style: {
+                    backgroundColor: bg,
+                    color: undefinedColor,
+                    borderColor: bg
+                },
+                className: "font-medium border"
+            };
+        }
+
+        const color = getGradeColor(score, gradeColors);
+        const rgb = hexToRgb(color);
+        const bg = rgb ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.2)` : color;
+
+        return {
+            style: {
+                backgroundColor: bg,
+                color: color,
+                borderColor: bg
+            },
+            className: "font-bold border"
+        };
     };
 
     if (events.length === 0) {
@@ -109,28 +153,41 @@ export function CourseCalendar({ events, onEditEvent, onAddEvent }: CourseCalend
                                     </div>
 
                                     <div className="flex flex-col gap-2">
-                                        {dayEvents.map(event => (
-                                            <div
-                                                key={event.id}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onEditEvent(event);
-                                                }}
-                                                className={cn(
-                                                    "text-xs p-2 rounded border cursor-pointer transition-all hover:scale-[1.02]",
-                                                    getScoreColor(event.score)
-                                                )}
-                                            >
-                                                <div className="flex items-center justify-between gap-1">
-                                                    <span className="truncate font-medium">{event.title}</span>
-                                                </div>
-                                                {event.score !== null && event.score !== undefined && (
-                                                    <div className="mt-1 text-[10px] font-bold">
-                                                        {event.score}%
+                                        {dayEvents.map(event => {
+                                            const { style, className } = getScoreStyles(event.score);
+                                            return (
+                                                <div
+                                                    key={event.id}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onEditEvent(event);
+                                                    }}
+                                                    className={cn(
+                                                        "text-xs p-2 rounded border cursor-pointer transition-all hover:scale-[1.02]",
+                                                        className
+                                                    )}
+                                                    style={style}
+                                                >
+                                                    <div className="flex items-center justify-between gap-1">
+                                                        <span className="truncate font-medium">
+                                                            {formatEventTitle(
+                                                                event.title,
+                                                                event,
+                                                                events,
+                                                                semesters.find(s => s.id === semesterId)?.startDate ? new Date(semesters.find(s => s.id === semesterId)!.startDate).getTime() : undefined,
+                                                                semesters.find(s => s.id === semesterId)?.breaks,
+                                                                settings?.workdays
+                                                            )}
+                                                        </span>
                                                     </div>
-                                                )}
-                                            </div>
-                                        ))}
+                                                    {event.score !== null && event.score !== undefined && (
+                                                        <div className="mt-1 text-[10px] font-bold">
+                                                            {event.score}%
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </GlassCard>
                             );

@@ -10,9 +10,11 @@ interface ModalProps {
     onClose: () => void;
     title: string;
     children: React.ReactNode;
+    headerAction?: React.ReactNode;
+    maxWidth?: string;
 }
 
-export function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, headerAction, maxWidth = "max-w-lg" }: ModalProps) {
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
             if (e.key === "Escape") onClose();
@@ -40,6 +42,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
+                        transition={{ duration: 0.1 }}
                         onClick={onClose}
                         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                     />
@@ -47,14 +50,18 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
                         initial={{ scale: 0.95, opacity: 0, y: 20 }}
                         animate={{ scale: 1, opacity: 1, y: 0 }}
                         exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                        className="relative w-full max-w-lg z-10"
+                        transition={{ duration: 0.1, ease: "easeOut" }}
+                        className={`relative w-full ${maxWidth} z-10`}
                     >
                         <GlassCard className="w-full max-h-[90vh] overflow-y-auto flex flex-col gap-4">
                             <div className="flex items-center justify-between mb-2">
                                 <h2 className="text-xl font-bold tracking-tight">{title}</h2>
-                                <Button variant="ghost" size="sm" onClick={onClose} className="!p-2">
-                                    <X className="w-5 h-5" />
-                                </Button>
+                                <div className="flex items-center gap-2">
+                                    {headerAction}
+                                    <Button variant="ghost" size="sm" onClick={onClose} className="!p-2">
+                                        <X className="w-5 h-5" />
+                                    </Button>
+                                </div>
                             </div>
                             {children}
                         </GlassCard>

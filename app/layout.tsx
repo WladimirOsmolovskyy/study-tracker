@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { FocusMiniplayer } from "@/components/focus/FocusMiniplayer";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -35,9 +37,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <main className="relative z-10">
-            {children}
-          </main>
+          <div className="flex min-h-screen bg-background">
+            <Sidebar />
+            <main className="flex-1 relative overflow-x-hidden">
+              {children}
+              <FocusMiniplayer />
+            </main>
+          </div>
         </ThemeProvider>
       </body>
     </html>

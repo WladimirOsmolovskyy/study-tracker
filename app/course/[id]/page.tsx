@@ -11,13 +11,14 @@ import { cn } from "@/lib/utils";
 import { EventModal } from "@/components/course/EventModal";
 import { CourseModal } from "@/components/dashboard/CourseModal";
 import { CourseCalendar } from "@/components/course/CourseCalendar";
+import { CourseStatistics } from "@/components/course/CourseStatistics";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { supabase } from "@/lib/supabase";
 
 export default function CoursePage() {
     const params = useParams();
     const router = useRouter();
-    const { courses, events, user, setUser, fetchData, isLoading } = useStudyStore();
+    const { user, setUser, fetchData, isLoading, courses, events, settings } = useStudyStore();
 
     // Modal States
     const [isEventModalOpen, setIsEventModalOpen] = useState(false);
@@ -26,6 +27,7 @@ export default function CoursePage() {
 
     const [initialDate, setInitialDate] = useState<Date | undefined>(undefined);
     const [isMounted, setIsMounted] = useState(false);
+    const [filterType, setFilterType] = useState<string>("all");
 
     useEffect(() => {
         setIsMounted(true);
@@ -41,7 +43,7 @@ export default function CoursePage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center text-white">
+            <div className="min-h-screen flex items-center justify-center text-foreground">
                 <Loader2 className="w-8 h-8 animate-spin" />
             </div>
         );
@@ -49,10 +51,11 @@ export default function CoursePage() {
 
     const course = courses.find((c) => c.id === params.id);
     const courseEvents = events.filter((e) => e.courseId === params.id).sort((a, b) => a.date - b.date);
+    const filteredCourseEvents = courseEvents.filter(e => filterType === "all" || e.type === filterType);
 
     if (!course) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center text-white gap-4">
+            <div className="min-h-screen flex flex-col items-center justify-center text-foreground gap-4">
                 <p>Course not found or loading...</p>
                 <Button onClick={() => router.push("/")}>Return Home</Button>
             </div>
@@ -73,8 +76,22 @@ export default function CoursePage() {
 
     // ... (getScoreColor remains same) ...
 
+    const getHexForColor = (colorName: string) => {
+        if (colorName.startsWith('#')) return colorName;
+        const colors: Record<string, string> = {
+            blue: "#3b82f6",
+            pink: "#ec4899",
+            purple: "#a855f7",
+            orange: "#f97316",
+            green: "#10b981",
+        };
+        return colors[colorName] || colors.blue;
+    };
+
+    const colorHex = getHexForColor(course.color);
+
     return (
-        <div className="min-h-screen p-8 md:p-12 max-w-5xl mx-auto relative">
+        <div className="min-h-screen p-8 md:p-12 max-w-[1600px] mx-auto relative">
             <GradientBlob />
 
             <div className="relative z-10 space-y-8">
@@ -84,18 +101,24 @@ export default function CoursePage() {
                             <ArrowLeft className="w-4 h-4 mr-2" />
                             Back to Dashboard
                         </Button>
-                        <ThemeToggle />
                     </div>
 
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div>
                             <div className="flex items-center gap-3 mb-2">
-                                <span className={cn(
-                                    "px-2 py-1 rounded text-xs font-bold uppercase tracking-wider bg-black/10 dark:bg-white/10 border border-black/10 dark:border-white/10 text-foreground",
-                                )}>
+                                <span
+                                    className="px-2 py-1 rounded text-xs font-bold uppercase tracking-wider border"
+                                    style={{
+                                        backgroundColor: `${colorHex}15`, // ~10% opacity
+                                        borderColor: `${colorHex}30`, // ~20% opacity
+                                        color: colorHex
+                                    }}
+                                >
                                     {course.code}
                                 </span>
-                                <span className="text-muted-foreground text-sm">{course.semester}</span>
+                                <span className="text-muted-foreground text-sm">
+                                    {useStudyStore.getState().semesters.find(s => s.id === course.semesterId)?.name || "Unknown Semester"}
+                                </span>
                             </div>
                             <div className="flex items-center gap-3">
                                 <h1 className="text-4xl font-bold text-foreground">{course.title}</h1>
@@ -116,8 +139,21 @@ export default function CoursePage() {
                 </header>
 
                 <section className="space-y-4">
+                    <CourseStatistics courseId={course.id} />
                     <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-semibold text-foreground/90">Course Schedule</h2>
+                        <div className="flex items-center gap-4">
+                            <h2 className="text-xl font-semibold text-foreground/90">Course Schedule</h2>
+                            <select
+                                value={filterType}
+                                onChange={(e) => setFilterType(e.target.value)}
+                                className="px-3 py-1.5 rounded-md text-sm font-medium bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:outline-none text-foreground capitalize"
+                            >
+                                <option value="all">All Types</option>
+                                {(settings?.eventTypes || ['lecture', 'homework', 'exam', 'lab', 'other']).map(t => (
+                                    <option key={t} value={t}>{t}</option>
+                                ))}
+                            </select>
+                        </div>
                         <div className="flex gap-4 text-xs text-muted-foreground">
                             <div className="flex items-center gap-1">
                                 <div className="w-2 h-2 rounded-full bg-brand-blue/50" />
@@ -139,7 +175,8 @@ export default function CoursePage() {
                     </div>
 
                     <CourseCalendar
-                        events={courseEvents}
+                        events={filteredCourseEvents}
+                        semesterId={course.semesterId}
                         onEditEvent={handleEditEvent}
                         onAddEvent={handleAddEvent}
                     />
@@ -150,6 +187,7 @@ export default function CoursePage() {
                 isOpen={isEventModalOpen}
                 onClose={() => setIsEventModalOpen(false)}
                 courseId={course.id}
+                semesterId={course.semesterId}
                 initialData={editingEvent}
                 initialDate={initialDate}
             />

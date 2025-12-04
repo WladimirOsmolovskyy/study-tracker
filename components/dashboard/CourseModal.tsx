@@ -19,26 +19,28 @@ const gradients = [
 ];
 
 export function CourseModal({ isOpen, onClose, initialData }: CourseModalProps) {
-    const { addCourse, updateCourse } = useStudyStore();
+    const { addCourse, updateCourse, semesters } = useStudyStore();
     const [title, setTitle] = useState("");
     const [code, setCode] = useState("");
-    const [semester, setSemester] = useState("");
+    const [semesterId, setSemesterId] = useState("");
     const [color, setColor] = useState("blue");
     const [isLoading, setIsLoading] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
             if (initialData) {
                 setTitle(initialData.title);
                 setCode(initialData.code);
-                setSemester(initialData.semester);
+                setSemesterId(initialData.semesterId || "");
                 setColor(initialData.color);
             } else {
                 setTitle("");
                 setCode("");
-                setSemester("");
+                setSemesterId("");
                 setColor("blue");
             }
+            setShowDeleteConfirm(false);
         }
     }, [isOpen, initialData]);
 
@@ -49,19 +51,18 @@ export function CourseModal({ isOpen, onClose, initialData }: CourseModalProps) 
         setIsLoading(true);
 
         try {
-            console.log("Submitting course with color:", color);
             if (initialData) {
                 await updateCourse(initialData.id, {
                     title,
                     code,
-                    semester: semester || "Current",
+                    semesterId: semesterId || null,
                     color,
                 });
             } else {
                 await addCourse({
                     title,
                     code,
-                    semester: semester || "Current",
+                    semesterId: semesterId || null,
                     color,
                 });
             }
@@ -69,7 +70,7 @@ export function CourseModal({ isOpen, onClose, initialData }: CourseModalProps) 
             // Reset and close
             setTitle("");
             setCode("");
-            setSemester("");
+            setSemesterId("");
             setColor("blue");
             onClose();
         } catch (error) {
@@ -108,13 +109,16 @@ export function CourseModal({ isOpen, onClose, initialData }: CourseModalProps) 
                     </div>
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-foreground/70">Semester</label>
-                        <input
-                            type="text"
-                            value={semester}
-                            onChange={(e) => setSemester(e.target.value)}
-                            placeholder="e.g. Fall 2024"
-                            className="w-full px-4 py-2 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/50 transition-all placeholder:text-muted-foreground/50 text-foreground"
-                        />
+                        <select
+                            value={semesterId}
+                            onChange={(e) => setSemesterId(e.target.value)}
+                            className="w-full px-4 py-2 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-brand-blue/50 focus:ring-1 focus:ring-brand-blue/50 transition-all text-foreground appearance-none"
+                        >
+                            <option value="">Select Semester...</option>
+                            {semesters.map(s => (
+                                <option key={s.id} value={s.id}>{s.name}</option>
+                            ))}
+                        </select>
                     </div>
                 </div>
 
@@ -149,6 +153,50 @@ export function CourseModal({ isOpen, onClose, initialData }: CourseModalProps) 
                         </div>
                     </div>
                 </div>
+
+                {initialData && (
+                    <div className="pt-4 border-t border-black/10 dark:border-white/10">
+                        <h4 className="text-sm font-medium text-foreground/70 mb-3">Danger Zone</h4>
+                        {showDeleteConfirm ? (
+                            <div className="flex items-center gap-3">
+                                <span className="text-sm text-foreground/70">Are you sure? This cannot be undone.</span>
+                                <div className="flex gap-2 ml-auto">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setShowDeleteConfirm(false)}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="danger"
+                                        size="sm"
+                                        onClick={async () => {
+                                            setIsLoading(true);
+                                            await useStudyStore.getState().deleteCourseEvents(initialData.id);
+                                            setIsLoading(false);
+                                            setShowDeleteConfirm(false);
+                                        }}
+                                        isLoading={isLoading}
+                                    >
+                                        Confirm Delete
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : (
+                            <Button
+                                type="button"
+                                variant="danger"
+                                className="w-full justify-start"
+                                onClick={() => setShowDeleteConfirm(true)}
+                            >
+                                Delete All Course Events
+                            </Button>
+                        )}
+                    </div>
+                )}
 
                 <div className="pt-4 flex justify-end gap-3">
                     <Button type="button" variant="ghost" onClick={onClose}>
